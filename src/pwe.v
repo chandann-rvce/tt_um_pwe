@@ -68,9 +68,9 @@ module tt_um_pwe (
 
   // Next-state logic and outputs
   always @(*) begin
-    next_state = state;
-    pulse_out  = 1'b0;
-    done       = 1'b0;
+    next_state <= state;
+    pulse_out  <= 1'b0;
+    done       <= 1'b0;
 
     case (state)
       IDLE: begin
