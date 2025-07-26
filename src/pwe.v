@@ -19,16 +19,15 @@ module tt_um_pwe (
   // Map ui_in pins to named signals
   wire        start = ui_in[0];
   wire        enable = ui_in[1];
-  wire [3:0]  data_in = ui_in[5:2];  // ui_in[5:2] for 4-bit input // ui_in[5:2] for 4-bit input
+  wire [3:0]  data_in = ui_in[5:2];  // ui_in[5:2] for 4-bit input
   wire        unused6 = ui_in[6];
   wire        unused7 = ui_in[7];
 
   // Output signals
   reg         pulse_out;
   reg         done;
-  wire [5:0]  unused_outputs = 6'b000000; // You can use this for debug if needed
+  wire [5:0]  unused_outputs = 6'b000000;
 
-  // Assign to uo_out[7:0]
   assign uo_out = {unused_outputs, done, pulse_out};
 
   // Tie off unused IOs
@@ -44,50 +43,60 @@ module tt_um_pwe (
   localparam DONE     = 2'b10;
 
   reg [1:0] state, next_state;
-  reg [3:0] counter, pulse_width;
+  reg [3:0] counter;
+  // Optional: remove if unused
+  reg [3:0] pulse_width;
 
-  // State update
+  // State and output update
   always @(posedge clk or posedge reset) begin
     if (reset) begin
       state       <= IDLE;
       counter     <= 4'd0;
-      pulse_width <= 4'd0;
       pulse_out   <= 1'b0;
       done        <= 1'b0;
+      pulse_width <= 4'd0;
     end else begin
       state <= next_state;
 
-      if (state == IDLE && start && enable) begin
-        pulse_width <= data_in;
-        counter     <= data_in;
-      end else if (state == COUNTING && counter > 0) begin
-        counter <= counter - 1;
-      end
+      case (state)
+        IDLE: begin
+          pulse_out <= 1'b0;
+          done      <= 1'b0;
+          if (start && enable) begin
+            pulse_width <= data_in;
+            counter     <= data_in;
+          end
+        end
+
+        COUNTING: begin
+          pulse_out <= 1'b1;
+          done      <= 1'b0;
+          if (counter > 0)
+            counter <= counter - 1;
+        end
+
+        DONE: begin
+          pulse_out <= 1'b0;
+          done      <= 1'b1;
+        end
+      endcase
     end
   end
 
-  // Next-state logic and outputs
+  // Next-state logic (pure combinational)
   always @(*) begin
-    next_state <= state;
-    pulse_out  <= 1'b0;
-    done       <= 1'b0;
-
     case (state)
-      IDLE: begin
-        if (start && enable)
-          next_state = COUNTING;
-      end
+      IDLE:
+        next_state = (start && enable) ? COUNTING : IDLE;
 
-      COUNTING: begin
-        pulse_out = 1'b1;
-        if (counter == 0)
-          next_state = DONE;
-      end
+      COUNTING:
+        next_state = (counter == 0) ? DONE : COUNTING;
 
-      DONE: begin
-        done = 1'b1;
+      DONE:
         next_state = IDLE;
-      end
+
+      default:
+        next_state = IDLE;
     endcase
   end
 
