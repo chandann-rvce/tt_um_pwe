@@ -17,11 +17,18 @@ module tt_um_pwe (
 );
 
   // Map ui_in pins to named signals
-  wire        start     = ui_in[0];
-  wire        enable    = ui_in[1];
-  wire [3:0]  data_in   = ui_in[5:2];  // ui_in[5:2] for 4-bit input
-  wire        unused6   = ui_in[6];
-  wire        unused7   = ui_in[7];
+  wire        start;
+  wire        enable;
+  wire [3:0]  data_in; // ui_in[5:2] for 4-bit input
+  wire        unused6;
+  wire        unused7;
+
+  assign start     = ui_in[0];
+  assign enable    = ui_in[1];
+  assign [3:0]data_in   = ui_in[5:2];  // ui_in[5:2] for 4-bit input
+  assign unused6   = ui_in[6];
+  assign unused7   = ui_in[7];
+
 
   // Output signals
   reg         pulse_out;
